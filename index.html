@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Transformation - Coach Personnel</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.5.0/dist/Recharts.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(-25%);
+                animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+            }
+            50% {
+                transform: translateY(0);
+                animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+            }
+        }
+        
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .8;
+            }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+        const { 
+            Scale, Activity, Target, TrendingDown, Calendar, Dumbbell, 
+            Apple, Zap, Award, ChevronRight, Plus, Check, Star, Trophy, 
+            Flame, Heart, ThumbsUp, Sparkles, Crown 
+        } = lucide;
+
+        const MaTransformationApp = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [showCelebration, setShowCelebration] = useState(false);
+            const [celebrationMessage, setCelebrationMessage] = useState('');
+            
+            // Données utilisateur personnalisées
+            const [profile] = useState({
+                currentWeight: 59,
+                targetWeight: 55,
+                currentWaist: 75,
+                startWaist: 91,
+                targetWaist: 70,
+                height: 158,
+                weeklyWeightGoal: 2,
+                weeklyWaistGoal: 2.5,
+                sessionsPerWeek: 5,
+                preferredTime: 'soir',
+                motivation: "Le regard ébahi de mon copain"
+            });
+
+            const [todayData, setTodayData] = useState({
+                weight: 59,
+                waist: 75,
+                caloriesConsumed: 0,
+                caloriesBurned: 0,
+                steps: 0,
+                waterGlasses: 0,
+                elasticExerciseDone: false,
+                vacuumDone: false,
+                sleepQuality: 0
+            });
+
+            const [weekProgress] = useState([
+                { day: 'L', weight: 59, waist: 75, deficit: -450 },
+                { day: 'M', weight: 58.7, waist: 74.6, deficit: -520 },
+                { day: 'M', weight: 58.5, waist: 74.3, deficit: -480 },
+                { day: 'J', weight: 58.2, waist: 74, deficit: -510 },
+                { day: 'V', weight: 58, waist: 73.7, deficit: -490 },
+                { day: 'S', weight: 57.8, waist: 73.4, deficit: -460 },
+                { day: 'D', weight: 57.5, waist: 73.1, deficit: -500 }
+            ]);
+
+            const [badges, setBadges] = useState([
+                { id: 1, name: '1ère séance', icon: '🎯', unlocked: true, date: 'Aujourd\'hui' },
+                { id: 2, name: 'Série de 3 jours', icon: '🔥', unlocked: false },
+                { id: 3, name: '-1kg', icon: '⚖️', unlocked: false },
+                { id: 4, name: '-1cm', icon: '📏', unlocked: false },
+                { id: 5, name: 'Semaine complète', icon: '👑', unlocked: false },
+                { id: 6, name: 'Déficit parfait', icon: '💎', unlocked: false },
+                { id: 7, name: '-2kg', icon: '🌟', unlocked: false },
+                { id: 8, name: 'Objectif atteint!', icon: '🏆', unlocked: false }
+            ]);
+
+            const [dailyChallenges] = useState([
+                { id: 1, title: '5 séries d\'élastiques', completed: false, points: 50 },
+                { id: 2, title: '3 séries de vacuum', completed: false, points: 30 },
+                { id: 3, title: 'Déficit calorique respecté', completed: false, points: 40 },
+                { id: 4, title: '8 verres d\'eau', completed: false, points: 20 },
+                { id: 5, title: '7000 pas', completed: false, points: 30 }
+            ]);
+
+            const [totalPoints, setTotalPoints] = useState(170);
+            const [streak, setStreak] = useState(3);
+
+            const motivationalMessages = [
+                "Imagine le regard de ton copain quand il verra ta taille affinée ! 😍",
+                "Tu l'as déjà fait une fois, tu peux le refaire ! 💪",
+                "Chaque séance te rapproche de ton objectif ! 🎯",
+                "Ta détermination est ta plus grande force ! ⚡",
+                "-16cm en novembre, tu es une warrior ! 👑",
+                "Les élastiques sont tes meilleurs alliés ! 💎",
+                "Le vacuum travaille même quand tu te reposes ! ✨",
+                "Tu ne construis pas juste un corps, tu reprends le contrôle ! 🔥"
+            ];
+
+            const [currentMessage, setCurrentMessage] = useState(motivationalMessages[0]);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setCurrentMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+                }, 10000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const calculateCalories = () => {
+                const bmr = (10 * profile.currentWeight) + (6.25 * profile.height) - (5 * 28) - 161;
+                const tdee = bmr * 1.3;
+                const targetCalories = Math.round(tdee - 500);
+                return { tdee: Math.round(tdee), target: targetCalories };
+            };
+
+            const calorieGoals = calculateCalories();
+
+            const celebrate = (message) => {
+                setCelebrationMessage(message);
+                setShowCelebration(true);
+                setTimeout(() => setShowCelebration(false), 3000);
+            };
+
+            const syncDevices = () => {
+                celebrate("✨ Données synchronisées ! Balance Sydonia & Xiaomi connectées");
+            };
+
+            const completeExercise = (exerciseType) => {
+                setTodayData({...todayData, [exerciseType]: true});
+                celebrate(`🎉 Bravo ! ${exerciseType === 'elasticExerciseDone' ? 'Élastiques terminés' : 'Vacuum accompli'} !`);
+                setTotalPoints(totalPoints + 50);
+            };
+
+            const weightProgress = ((profile.currentWeight - profile.targetWeight) / (59 - profile.targetWeight)) * 100;
+            const waistProgress = ((profile.startWaist - profile.currentWaist) / (profile.startWaist - profile.targetWaist)) * 100;
+
+            const DashboardView = () => (
+                <div className="space-y-6">
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-8 text-white shadow-2xl">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32"></div>
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -ml-24 -mb-24"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
+                                        <Flame className="w-8 h-8" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl font-black tracking-tight">MA TRANSFORMATION</h2>
+                                        <p className="text-rose-100 text-sm font-medium">Série de {streak} jours ! 🔥</p>
+                                    </div>
+                                </div>
+                                <button onClick={syncDevices} className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl hover:bg-white/30 transition-all font-semibold flex items-center gap-2">
+                                    <Zap className="w-4 h-4" />
+                                    Sync
+                                </button>
+                            </div>
+                            
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-4 border border-white/20">
+                                <p className="text-lg font-bold mb-2">💭 {currentMessage}</p>
+                                <div className="flex items-center gap-2 text-sm text-rose-100">
+                                    <Heart className="w-4 h-4 fill-current" />
+                                    <span>Tu es à {Math.round((profile.currentWeight - profile.targetWeight) * 100) / 100}kg de ton objectif</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Scale className="w-5 h-5" />
+                                        <span className="text-2xl font-black">{profile.currentWeight}kg</span>
+                                    </div>
+                                    <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+                                        <div className="bg-white rounded-full h-2 transition-all duration-500" style={{width: `${100 - weightProgress}%`}}></div>
+                                    </div>
+                                    <p className="text-xs text-rose-100">Objectif: {profile.targetWeight}kg</p>
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Target className="w-5 h-5" />
+                                        <span className="text-2xl font-black">{profile.currentWaist}cm</span>
+                                    </div>
+                                    <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+                                        <div className="bg-white rounded-full h-2 transition-all duration-500" style={{width: `${waistProgress}%`}}></div>
+                                    </div>
+                                    <p className="text-xs text-rose-100">Objectif: {profile.targetWaist}cm</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                                <Trophy className="w-6 h-6 text-amber-500" />
+                                Défis du jour
+                            </h3>
+                            <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-2 rounded-full font-black text-sm">
+                                {totalPoints} points
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            {dailyChallenges.map((challenge) => (
+                                <div key={challenge.id} className={`flex items-center justify-between p-4 rounded-2xl transition-all ${challenge.completed ? 'bg-green-50 border-2 border-green-300' : 'bg-gray-50 border-2 border-gray-200 hover:border-pink-300'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${challenge.completed ? 'bg-green-500' : 'bg-gray-300'}`}>
+                                            {challenge.completed ? <Check className="w-5 h-5 text-white" /> : <span className="text-white font-bold text-sm">{challenge.id}</span>}
+                                        </div>
+                                        <span className={`font-bold ${challenge.completed ? 'text-green-700 line-through' : 'text-gray-900'}`}>
+                                            {challenge.title}
+                                        </span>
+                                    </div>
+                                    <span className="text-amber-600 font-black text-sm">+{challenge.points}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 shadow-lg border-2 border-purple-200">
+                        <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                            <Dumbbell className="w-6 h-6 text-purple-600" />
+                            Programme du jour
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div className="bg-white rounded-2xl p-5 shadow-md border-2 border-purple-100">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 className="font-black text-lg text-gray-900 mb-1">💪 Élastiques + Jambes 90°</h4>
+                                        <p className="text-sm text-gray-600 mb-2">5 séries de 15 répétitions</p>
+                                        <p className="text-xs text-gray-500 italic">Allongée, tire les élastiques vers la poitrine + lève les pieds à 90°</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => completeExercise('elasticExerciseDone')}
+                                        disabled={todayData.elasticExerciseDone}
+                                        className={`px-6 py-3 rounded-xl font-black transition-all ${todayData.elasticExerciseDone ? 'bg-green-500 text-white' : 'bg-purple-600 text-white hover:bg-purple-700 hover:scale-105'}`}
+                                    >
+                                        {todayData.elasticExerciseDone ? '✓ Fait !' : 'Terminer'}
+                                    </button>
+                                </div>
+                                <div className="bg-purple-50 rounded-xl p-3 mt-3">
+                                    <p className="text-xs text-purple-900 font-semibold">⏱️ Repos: 30-45 secondes entre les séries</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl p-5 shadow-md border-2 border-pink-100">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 className="font-black text-lg text-gray-900 mb-1">🫁 Vacuum Abdominal</h4>
+                                        <p className="text-sm text-gray-600 mb-2">3 séries de 20-30 secondes</p>
+                                        <p className="text-xs text-gray-500 italic">Expire tout l'air et rentre le ventre au maximum</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => completeExercise('vacuumDone')}
+                                        disabled={todayData.vacuumDone}
+                                        className={`px-6 py-3 rounded-xl font-black transition-all ${todayData.vacuumDone ? 'bg-green-500 text-white' : 'bg-pink-600 text-white hover:bg-pink-700 hover:scale-105'}`}
+                                    >
+                                        {todayData.vacuumDone ? '✓ Fait !' : 'Terminer'}
+                                    </button>
+                                </div>
+                                <div className="bg-pink-50 rounded-xl p-3 mt-3">
+                                    <p className="text-xs text-pink-900 font-semibold">⏱️ Repos: 1 minute entre les séries</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+                        <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                            <TrendingDown className="w-6 h-6 text-green-600" />
+                            Progression hebdomadaire
+                        </h3>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={weekProgress}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis dataKey="day" stroke="#666" style={{fontSize: '12px', fontWeight: 'bold'}} />
+                                <YAxis stroke="#666" style={{fontSize: '12px'}} />
+                                <Tooltip 
+                                    contentStyle={{backgroundColor: '#fff', border: '2px solid #ec4899', borderRadius: '12px', fontWeight: 'bold'}}
+                                />
+                                <Line type="monotone" dataKey="weight" stroke="#ec4899" strokeWidth={3} dot={{fill: '#ec4899', r: 5}} name="Poids (kg)" />
+                                <Line type="monotone" dataKey="waist" stroke="#8b5cf6" strokeWidth={3} dot={{fill: '#8b5cf6', r: 5}} name="Tour de taille (cm)" />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+
+            const BadgesView = () => (
+                <div className="space-y-6">
+                    <div className="bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 rounded-3xl p-8 text-white shadow-2xl">
+                        <h2 className="text-3xl font-black mb-2">🏆 MES VICTOIRES</h2>
+                        <p className="text-amber-100 font-semibold">Chaque pas compte, chaque effort est célébré !</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {badges.map((badge) => (
+                            <div key={badge.id} className={`rounded-2xl p-6 text-center transition-all transform hover:scale-105 ${badge.unlocked ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-xl' : 'bg-gray-100 text-gray-400'}`}>
+                                <div className="text-5xl mb-3">{badge.icon}</di
